@@ -1,0 +1,23 @@
+{
+  "projectName": "bodo",
+  "mode": "file-router",
+  "typescript": true,
+  "packageManager": "bun",
+  "includeExamples": false,
+  "tailwind": true,
+  "addOnOptions": {},
+  "envVarValues": {
+    "CONVEX_DEPLOYMENT": "https://youthful-shark-333.eu-west-1.convex.cloud",
+    "VITE_CONVEX_URL": "https://youthful-shark-333.eu-west-1.convex.site"
+  },
+  "git": false,
+  "routerOnly": false,
+  "version": 1,
+  "framework": "react",
+  "chosenAddOns": [
+    "biome",
+    "convex",
+    "shadcn",
+    "better-auth"
+  ]
+}
