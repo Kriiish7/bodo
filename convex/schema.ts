@@ -11,13 +11,19 @@ export default defineSchema({
     polarSubscriptionId: v.optional(v.string()),
     polarCustomerId: v.optional(v.string()),
   }).index("by_email", ["email"]).index("by_authId", ["authId"]).index("by_polar_subscription", ["polarSubscriptionId"]),
+  spaces: defineTable({
+    name: v.string(),
+    ownerId: v.id("users"),
+    createdAt: v.optional(v.number()),
+  }).index("by_owner", ["ownerId"]),
   boards: defineTable({
     title: v.string(),
     ownerId: v.id("users"),
+    spaceId: v.optional(v.id("spaces")),
     isPublic: v.boolean(),
     createdAt: v.optional(v.number()),
     updatedAt: v.optional(v.number()),
-  }).index("by_owner", ["ownerId"]),
+  }).index("by_owner", ["ownerId"]).index("by_space", ["spaceId"]),
   elements: defineTable({
     boardId: v.id("boards"),
     type: v.union(

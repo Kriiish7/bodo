@@ -6,6 +6,7 @@ import {
 	FileText,
 	Hand,
 	Highlighter,
+	Film,
 	Image as ImageIcon,
 	Lock,
 	Minus,
@@ -17,6 +18,7 @@ import {
 	StickyNote,
 	Type,
 	Undo2,
+	TableProperties,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "#/components/ui/button";
@@ -28,6 +30,8 @@ import {
 } from "#/components/ui/tooltip";
 import { useTheme } from "#/hooks/useTheme";
 import { getStrokeOutline, smoothPath } from "./strokeUtils";
+import { TableNode } from "./TableNode";
+import { renderToStaticMarkup } from "react-dom/server";
 
 type Tool =
 	| "lock"
@@ -45,6 +49,8 @@ type Tool =
 	| "library"
 	| "highlight"
 	| "sticky"
+	| "table"
+	| "timelapse"
 	| "pdf";
 
 interface Camera {
@@ -73,8 +79,26 @@ const DARK_COLORS = [
 const STROKE_WIDTHS = [2, 4, 8];
 const MAX_HISTORY = 100;
 
-export function LocalWhiteboardCanvas() {
-	const [elements, setElements] = useState<any[]>([]);
+export function LocalWhiteboardCanvas({ boardId }: { boardId?: string }) {
+	const storageKey = `bodo_board_${boardId || "local"}`;
+	const [elements, setElements] = useState<any[]>(() => {
+		try {
+			const saved = localStorage.getItem(storageKey);
+			if (saved) return JSON.parse(saved);
+		} catch (e) {
+			console.error("Failed to load local board state", e);
+		}
+		return [];
+	});
+
+	// Save to local storage on changes (debounced by only saving when history is pushed)
+	useEffect(() => {
+		try {
+			localStorage.setItem(storageKey, JSON.stringify(elements));
+		} catch (e) {
+			console.warn("Could not save board to localStorage");
+		}
+	}, [elements, storageKey]);
 
 	const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, zoom: 1 });
 	const [tool, setTool] = useState<Tool>("select");
@@ -120,6 +144,9 @@ export function LocalWhiteboardCanvas() {
 		historyIndexRef.current = idx + 1;
 		setElements(historyRef.current[historyIndexRef.current]);
 	}, []);
+
+	const [isExporting, setIsExporting] = useState(false);
+
 	const { resolved: theme } = useTheme();
 	const isDark = theme !== "light";
 	const COLORS = isDark ? DARK_COLORS : LIGHT_COLORS;
@@ -231,6 +258,7 @@ export function LocalWhiteboardCanvas() {
 		s: "sticky",
 		i: "image",
 		p: "pdf",
+		t: "table",
 	};
 
 	// ── PDF upload handler ──
@@ -549,17 +577,17 @@ export function LocalWhiteboardCanvas() {
 				},
 			]);
 			setActiveId(id);
-		} else if (tool === "text") {
+		} else if (tool === "text" || tool === "table") {
 			const id = generateId();
 			setElements((prev) => [
 				...prev,
 				{
 					_id: id,
-					type: "text",
+					type: tool,
 					x,
 					y,
-					width: 150,
-					height: 40,
+					width: tool === "table" ? 500 : 150,
+					height: tool === "table" ? 400 : 40,
 					text: "",
 					layer: Date.now(),
 					stroke: strokeColor,
@@ -778,13 +806,99 @@ export function LocalWhiteboardCanvas() {
 			shortcut: "I",
 		},
 		{ id: "pdf", icon: FileText, label: "PDF Attachment", shortcut: "P" },
+		{ id: "table", icon: TableProperties, label: "Structured Data Node", shortcut: "T" },
 		{ id: "eraser", icon: Eraser, label: "Matter Annihilator", shortcut: "0" },
+		{ id: "timelapse", icon: Film, label: "Export Timelapse (FFmpeg)" },
 		{ divider: true },
 		{ id: "library", icon: Shapes, label: "Construct Library" },
 	];
 
-	const renderShapes = () => {
-		return elements.map((el) => {
+	const exportTimelapse = async () => {
+		if (isExporting) return;
+		try {
+			setIsExporting(true);
+			setTool("select");
+			const { FFmpeg } = await import('@ffmpeg/ffmpeg');
+			const ffmpeg = new FFmpeg();
+			
+			await ffmpeg.load({
+				coreURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js",
+				wasmURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm"
+			});
+
+			const canvas = document.createElement("canvas");
+			const W = 1280;
+			const H = 720;
+			canvas.width = W;
+			canvas.height = H;
+			const ctx = canvas.getContext("2d")!;
+
+			const totalFrames = historyRef.current.length;
+			
+			for (let i = 0; i < totalFrames; i++) {
+				const frameElements = historyRef.current[i];
+				const svgRenderer = renderShapes(frameElements);
+				const svgString = renderToStaticMarkup(
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width={W}
+						height={H}
+						viewBox={`0 0 ${W} ${H}`}
+						style={{ backgroundColor: isDark ? "#0a0a0a" : "#fdfdfd" }}
+					>
+						<g transform={`scale(${camera.zoom}) translate(${camera.x}, ${camera.y})`}>
+							{svgRenderer}
+						</g>
+					</svg>
+				);
+
+				const img = new window.Image();
+				const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
+				
+				await new Promise((resolve) => {
+					img.onload = () => {
+						ctx.fillStyle = isDark ? "#0a0a0a" : "#fdfdfd";
+						ctx.fillRect(0, 0, W, H);
+						ctx.drawImage(img, 0, 0);
+						resolve(null);
+					};
+					img.onerror = resolve; // Skip on error instead of throwing
+					img.src = svgUrl;
+				});
+
+				const blob = await new Promise<Blob>((res) => canvas.toBlob((b) => res(b!), "image/png"));
+				const data = new Uint8Array(await blob.arrayBuffer());
+				const frameName = `frame${i.toString().padStart(3, '0')}.png`;
+				await ffmpeg.writeFile(frameName, data);
+			}
+
+			// Encode with ffmpeg using libx264
+			await ffmpeg.exec([
+				'-framerate', '5', 
+				'-i', 'frame%03d.png', 
+				'-c:v', 'libx264', 
+				'-preset', 'ultrafast', 
+				'-pix_fmt', 'yuv420p', 
+				'output.mp4'
+			]);
+			
+			const ext = await ffmpeg.readFile('output.mp4');
+			const outBlob = new Blob([ext as unknown as BlobPart], { type: 'video/mp4' });
+			const url = URL.createObjectURL(outBlob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `timelapse.mp4`;
+			a.click();
+		} catch (e) {
+			console.error(e);
+			alert("Timelapse export failed.");
+		} finally {
+			setIsExporting(false);
+		}
+	};
+
+	const renderShapes = (renderElements = elements) => {
+		return renderElements.map((el) => {
 			const isSelected = activeId === el._id;
 			const sw = el.strokeWidth || 2;
 			const stroke =
@@ -932,6 +1046,43 @@ export function LocalWhiteboardCanvas() {
 								outline: isSelected ? "2px solid #3b82f6" : "none",
 							}}
 						/>
+					</g>
+				);
+			}
+			if (el.type === "table") {
+				const rx = (el.width || 0) < 0 ? el.x + (el.width || 0) : el.x;
+				const ry = (el.height || 0) < 0 ? el.y + (el.height || 0) : el.y;
+				const w = Math.max(Math.abs(el.width || 0), 400);
+				const h = Math.max(Math.abs(el.height || 0), 300);
+
+				return (
+					<g
+						key={el._id}
+						onPointerEnter={() => handleElementHover(el._id)}
+						onPointerDown={(e: React.PointerEvent) => {
+							if (tool !== "select" || activeId !== el._id) {
+								handleElementDown(e, el._id);
+							}
+						}}
+						style={commonProps.style}
+					>
+						<foreignObject x={rx} y={ry} width={w} height={h}>
+							<div
+								onPointerDown={(e) => {
+									if (tool === "select" && activeId === el._id) {
+										e.stopPropagation();
+									}
+								}}
+								className="w-full h-full p-2"
+							>
+								<TableNode
+									el={el}
+									isActive={activeId === el._id && tool === "select"}
+									setElements={setElements}
+									allElements={elements}
+								/>
+							</div>
+						</foreignObject>
 					</g>
 				);
 			}
@@ -1143,6 +1294,10 @@ export function LocalWhiteboardCanvas() {
 									<div className="relative">
 										<button
 											onClick={() => {
+												if (t.id === "timelapse") {
+													exportTimelapse();
+													return;
+												}
 												if (t.id === "pdf") {
 													pdfInputRef.current?.click();
 													return;
@@ -1154,12 +1309,16 @@ export function LocalWhiteboardCanvas() {
 												setTool(t.id as Tool);
 											}}
 											className={`p-2 rounded-[8px] transition-colors flex items-center justify-center min-w-[36px] min-h-[36px] ${
-												isActive
+												isActive || (t.id === "timelapse" && isExporting)
 													? "bg-[#e2dffe] dark:bg-[#3d3578] text-[#34277b] dark:text-[#c9c0ff]"
 													: "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"
 											}`}
 										>
-											<Icon size={18} strokeWidth={isActive ? 2 : 1.5} />
+											{isExporting && t.id === "timelapse" ? (
+												<div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+											) : (
+												<Icon size={18} strokeWidth={isActive ? 2 : 1.5} />
+											)}
 										</button>
 										{t.shortcut && (
 											<span className="absolute bottom-1 right-1 pointer-events-none text-[8px] font-medium opacity-50">

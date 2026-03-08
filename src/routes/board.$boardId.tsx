@@ -1,9 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { ArrowLeft, Cloud, Share2 } from "lucide-react";
-import { WhiteboardCanvas } from "#/components/canvas/WhiteboardCanvas";
+import { LocalWhiteboardCanvas } from "#/components/canvas/LocalWhiteboardCanvas";
+import { MeetingToolbar } from "#/components/canvas/MeetingToolbar";
 import { Button } from "#/components/ui/button";
 import { useSession } from "#/lib/auth-client";
+import { useState } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 
@@ -19,6 +21,7 @@ function Board() {
 	const board = useQuery(api.boards.get, { boardId: validBoardId });
 
 	const { data: session, isPending } = useSession();
+	const [isPrivate, setIsPrivate] = useState(false);
 
 	const handleBack = () => {
 		navigate({ to: "/dashboard" });
@@ -97,7 +100,8 @@ function Board() {
 
 			{/* Main Canvas Area */}
 			<main className="flex-1 relative cursor-crosshair">
-				<WhiteboardCanvas boardId={validBoardId} />
+				<MeetingToolbar isPrivate={isPrivate} setIsPrivate={setIsPrivate} />
+				<LocalWhiteboardCanvas boardId={validBoardId} />
 			</main>
 		</div>
 	);

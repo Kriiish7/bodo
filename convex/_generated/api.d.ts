@@ -13,6 +13,7 @@ import type * as boards from "../boards.js";
 import type * as elements from "../elements.js";
 import type * as http from "../http.js";
 import type * as polar from "../polar.js";
+import type * as spaces from "../spaces.js";
 import type * as users from "../users.js";
 
 import type {
@@ -27,6 +28,7 @@ declare const fullApi: ApiFromModules<{
   elements: typeof elements;
   http: typeof http;
   polar: typeof polar;
+  spaces: typeof spaces;
   users: typeof users;
 }>;
 

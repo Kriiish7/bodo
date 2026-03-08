@@ -2,12 +2,13 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
 export const create = mutation({
-  args: { title: v.string(), ownerId: v.id("users"), isPublic: v.boolean() },
+  args: { title: v.string(), ownerId: v.id("users"), isPublic: v.boolean(), spaceId: v.optional(v.id("spaces")) },
   handler: async (ctx, args) => {
     const now = Date.now();
     return await ctx.db.insert("boards", {
       title: args.title,
       ownerId: args.ownerId,
+      spaceId: args.spaceId,
       isPublic: args.isPublic,
       createdAt: now,
       updatedAt: now,
@@ -51,12 +52,13 @@ export const remove = mutation({
 });
 
 export const update = mutation({
-  args: { boardId: v.id("boards"), title: v.string(), isPublic: v.optional(v.boolean()) },
+  args: { boardId: v.id("boards"), title: v.optional(v.string()), isPublic: v.optional(v.boolean()), spaceId: v.optional(v.id("spaces")) },
   handler: async (ctx, args) => {
-    const { boardId, title, isPublic } = args;
+    const { boardId, title, isPublic, spaceId } = args;
     await ctx.db.patch(boardId, {
-      title,
-      isPublic: isPublic !== undefined ? isPublic : undefined,
+      ...(title !== undefined ? { title } : {}),
+      ...(spaceId !== undefined ? { spaceId } : {}),
+      ...(isPublic !== undefined ? { isPublic } : {}),
       updatedAt: Date.now(),
     });
   },
