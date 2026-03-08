@@ -3,13 +3,14 @@ import { v } from "convex/values";
 
 export default defineSchema({
   users: defineTable({
+    authId: v.optional(v.string()),
     name: v.string(),
     email: v.string(),
     avatarUrl: v.optional(v.string()),
     isPro: v.optional(v.boolean()),
     polarSubscriptionId: v.optional(v.string()),
     polarCustomerId: v.optional(v.string()),
-  }).index("by_polar_subscription", ["polarSubscriptionId"]),
+  }).index("by_email", ["email"]).index("by_authId", ["authId"]).index("by_polar_subscription", ["polarSubscriptionId"]),
   boards: defineTable({
     title: v.string(),
     ownerId: v.id("users"),
