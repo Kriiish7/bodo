@@ -80,14 +80,14 @@ function Auth() {
 	};
 
 	return (
-		<div className="flex h-screen w-full font-sans bg-zinc-100 overflow-hidden selection:bg-red-500/30">
-			<div className="hidden lg:flex w-[45%] bg-[#0a0a0a] text-white flex-col justify-between p-12 relative overflow-hidden shadow-2xl z-10">
+		<div className="flex h-screen w-full font-sans bg-background overflow-hidden selection:bg-red-500/30">
+			<div className="hidden lg:flex w-[45%] bg-[oklch(0.145 0 0)] text-white flex-col justify-between p-12 relative overflow-hidden shadow-2xl z-10">
 				<img
 					src="/bg-aurora.png"
 					alt=""
 					className="absolute inset-0 w-full h-full object-cover opacity-60"
 				/>
-				<div className="absolute inset-0 bg-linear-to-b from-[#0a0a0a]/60 via-[#0a0a0a]/30 to-[#0a0a0a]/80" />
+				<div className="absolute inset-0 bg-linear-to-b from-[oklch(0.145 0 0)]/60 via-[oklch(0.145 0 0)]/30 to-[oklch(0.145 0 0)]/80" />
 
 				<div
 					className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-red-900/20 blur-[100px] animate-pulse"
@@ -152,17 +152,17 @@ function Auth() {
 			</div>
 
 			<div className="flex-1 flex flex-col justify-center items-center p-6 sm:p-12 relative overflow-auto">
-				<div className="absolute top-8 left-8 lg:hidden flex items-center gap-2 font-bold text-xl tracking-tight text-zinc-900 z-20">
+				<div className="absolute top-8 left-8 lg:hidden flex items-center gap-2 font-bold text-xl tracking-tight text-foreground z-20">
 					<img src="/logo-light.png" alt="Bodo" className="h-9 w-9" />
 					Bodo
 				</div>
 
-				<div className="w-full max-w-[440px] bg-white rounded-3xl shadow-[0_8px_40px_rgb(0,0,0,0.06)] p-8 sm:p-10 border border-zinc-200/60 relative z-10 transition-all">
+				<div className="w-full max-w-[440px] bg-card text-card-foreground rounded-3xl shadow-xl shadow-black/5 p-8 sm:p-10 border border-border relative z-10 transition-all">
 					<div className="mb-8 relative">
-						<h2 className="text-2xl sm:text-3xl font-bold text-zinc-900 mb-2 tracking-tight">
+						<h2 className="text-2xl sm:text-3xl font-bold mb-2 tracking-tight">
 							{isLogin ? "Welcome back" : "Create an account"}
 						</h2>
-						<p className="text-zinc-500 text-sm">
+						<p className="text-muted-foreground text-sm">
 							{isLogin
 								? "Enter your credentials to access your workspace"
 								: "Sign up to start collaborating with your team"}
@@ -178,12 +178,12 @@ function Auth() {
 					<form onSubmit={handleSubmit} className="flex flex-col gap-5">
 						{!isLogin && (
 							<div className="space-y-2">
-								<Label htmlFor="name" className="text-zinc-700 font-semibold">
+								<Label htmlFor="name" className="text-foreground font-semibold">
 									Full Name
 								</Label>
 								<Input
 									id="name"
-									className="bg-white border-zinc-200 focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all h-12 rounded-xl text-base px-4"
+									className="bg-background border-input focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all h-12 rounded-xl text-base px-4"
 									placeholder="John Doe"
 									value={name}
 									onChange={(e) => setName(e.target.value)}
@@ -194,12 +194,12 @@ function Auth() {
 						)}
 
 						<div className="space-y-2">
-							<Label htmlFor="email" className="text-zinc-700 font-semibold">
+							<Label htmlFor="email" className="text-foreground font-semibold">
 								Email address
 							</Label>
 							<Input
 								id="email"
-								className="bg-white border-zinc-200 focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all h-12 rounded-xl text-base px-4"
+								className="bg-background border-input focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all h-12 rounded-xl text-base px-4"
 								type="email"
 								placeholder="you@company.com"
 								value={email}
@@ -213,14 +213,14 @@ function Auth() {
 							<div className="flex items-center justify-between">
 								<Label
 									htmlFor="password"
-									className="text-zinc-700 font-semibold"
+									className="text-foreground font-semibold"
 								>
 									Password
 								</Label>
 								{isLogin && (
 									<a
 										href="#"
-										className="text-xs font-semibold text-red-600 hover:text-red-500 transition-colors bg-red-50 px-2 py-1 rounded-md"
+										className="text-xs font-semibold text-red-600 hover:text-red-500 transition-colors bg-red-500/10 px-2 py-1 rounded-md"
 									>
 										Forgot password?
 									</a>
@@ -228,7 +228,7 @@ function Auth() {
 							</div>
 							<Input
 								id="password"
-								className="bg-white border-zinc-200 focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all h-12 rounded-xl text-base px-4"
+								className="bg-background border-input focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all h-12 rounded-xl text-base px-4"
 								type="password"
 								placeholder="••••••••"
 								value={password}
@@ -242,11 +242,11 @@ function Auth() {
 							<div className="flex items-center space-x-2 mt-1">
 								<Checkbox
 									id="remember"
-									className="bg-white border-zinc-300 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600 rounded-sm"
+									className="bg-background border-input data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600 rounded-sm"
 								/>
 								<label
 									htmlFor="remember"
-									className="text-sm font-medium leading-none text-zinc-600 cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+									className="text-sm font-medium leading-none text-foreground cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 								>
 									Remember me for 30 days
 								</label>
@@ -255,7 +255,7 @@ function Auth() {
 
 						<Button
 							type="submit"
-							className="mt-2 w-full bg-[#0a0a0a] hover:bg-zinc-800 text-white shadow-xl shadow-black/10 h-12 text-base font-semibold rounded-xl transition-all hover:-translate-y-0.5"
+							className="mt-2 w-full bg-[oklch(0.145 0 0)] hover:bg-zinc-800 text-white shadow-xl shadow-black/10 h-12 text-base font-semibold rounded-xl transition-all hover:-translate-y-0.5"
 							disabled={isLoading}
 						>
 							{isLoading ? (
@@ -273,14 +273,14 @@ function Auth() {
 						</Button>
 					</form>
 
-					<div className="mt-8 flex items-center justify-center gap-4 before:h-px before:flex-1 before:bg-zinc-200 after:h-px after:flex-1 after:bg-zinc-200 text-xs text-zinc-400 font-medium uppercase tracking-wider">
+					<div className="mt-8 flex items-center justify-center gap-4 before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border text-xs text-muted-foreground font-medium uppercase tracking-wider">
 						Or continue with
 					</div>
 
 					<div className="mt-6 grid grid-cols-2 gap-3">
 						<Button
 							variant="outline"
-							className="bg-white h-11 rounded-xl border-zinc-200 hover:bg-zinc-50 hover:border-zinc-300 font-medium transition-colors"
+							className="h-11 rounded-xl font-medium transition-colors"
 							onClick={() => handleOAuthLogin()}
 							disabled={isLoading}
 						>
@@ -289,33 +289,33 @@ function Auth() {
 						</Button>
 						<Button
 							variant="outline"
-							className="bg-white h-11 rounded-xl border-zinc-200 hover:bg-zinc-50 hover:border-zinc-300 font-medium transition-colors"
+							className="h-11 rounded-xl font-medium transition-colors"
 							onClick={() => handleOAuthLogin()}
 							disabled={isLoading}
 						>
 							<svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
 								<path
 									d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-									fill="#4285F4"
+									fill="oklch(0.63 0.18 259.96)"
 								/>
 								<path
 									d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-									fill="#34A853"
+									fill="oklch(0.648 0.16 148.5)"
 								/>
 								<path
 									d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-									fill="#FBBC05"
+									fill="oklch(0.83 0.17 83.99)"
 								/>
 								<path
 									d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-									fill="#EA4335"
+									fill="oklch(0.626 0.206 29.08)"
 								/>
 							</svg>
 							Google
 						</Button>
 					</div>
 
-					<div className="mt-8 text-center text-sm text-zinc-600 bg-white py-3 rounded-xl border border-zinc-100">
+					<div className="mt-8 text-center text-sm text-muted-foreground bg-muted/30 py-3 rounded-xl border border-border">
 						{isLogin ? "Don't have an account? " : "Already have an account? "}
 						<button
 							onClick={() => {
