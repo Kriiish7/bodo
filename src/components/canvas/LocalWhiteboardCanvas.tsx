@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { MousePointer2, Pen, Square, Circle, Eraser, Hand, Lock, Diamond, ArrowRight, Minus, Type, Image as ImageIcon, Shapes, Highlighter, StickyNote, Sun, Moon, Undo2, Redo2 } from 'lucide-react'
+import { MousePointer2, Pen, Square, Circle, Eraser, Hand, Lock, Diamond, ArrowRight, Minus, Type, Image as ImageIcon, Shapes, Highlighter, StickyNote, Sun, Moon, Undo2, Redo2, FileText } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '#/components/ui/tooltip'
 import { Button } from '#/components/ui/button'
 import { useTheme } from '#/hooks/useTheme'
 import { ThemeSelector } from '#/components/ui/ThemeSelector'
 import { smoothPath, getStrokeOutline } from './strokeUtils'
 
-type Tool = 'lock' | 'hand' | 'select' | 'path' | 'rectangle' | 'ellipse' | 'eraser' | 'diamond' | 'arrow' | 'line' | 'text' | 'image' | 'library' | 'highlight' | 'sticky'
+type Tool = 'lock' | 'hand' | 'select' | 'path' | 'rectangle' | 'ellipse' | 'eraser' | 'diamond' | 'arrow' | 'line' | 'text' | 'image' | 'library' | 'highlight' | 'sticky' | 'pdf'
 
 interface Camera {
   x: number
@@ -35,6 +35,8 @@ export function LocalWhiteboardCanvas() {
   const lastPenToolRef = useRef<Tool>('path') // remember last drawing tool for stylus auto-switch
 
   const svgRef = useRef<SVGSVGElement>(null)
+  const pdfInputRef = useRef<HTMLInputElement>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
 
   // ── Undo / Redo history ──
   const historyRef = useRef<any[][]>([[]])
@@ -161,8 +163,135 @@ export function LocalWhiteboardCanvas() {
   const SHORTCUT_MAP: Record<string, Tool> = {
     'h': 'hand', '1': 'select', '2': 'rectangle', '3': 'diamond',
     '4': 'ellipse', '5': 'arrow', '6': 'line', '7': 'path',
-    '8': 'highlight', '9': 'text', '0': 'eraser', 's': 'sticky', 'i': 'image',
+    '8': 'highlight', '9': 'text', '0': 'eraser', 's': 'sticky', 'i': 'image', 'p': 'pdf',
   }
+
+  // ── PDF upload handler ──
+  const handlePdfUpload = useCallback(async (file: File) => {
+    try {
+      // Dynamically import pdfjs-dist
+      const pdfjsLib = await import('pdfjs-dist')
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
+
+      const arrayBuffer = await file.arrayBuffer()
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+
+      const cx = -camera.x + (window.innerWidth / 2 / camera.zoom)
+      let yOffset = -camera.y + (window.innerHeight / 2 / camera.zoom)
+
+      const newElements: any[] = []
+
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum)
+        const scale = 2 // render at 2x for crisp quality
+        const viewport = page.getViewport({ scale })
+
+        const canvas = document.createElement('canvas')
+        canvas.width = viewport.width
+        canvas.height = viewport.height
+        const ctx = canvas.getContext('2d')!
+        await page.render({ canvasContext: ctx, viewport }).promise
+
+        const dataUrl = canvas.toDataURL('image/png')
+        const displayWidth = Math.min(viewport.width / scale, 600)
+        const displayHeight = (viewport.height / viewport.width) * displayWidth
+
+        const id = generateId()
+        newElements.push({
+          _id: id,
+          type: 'pdf',
+          x: cx - displayWidth / 2,
+          y: yOffset - (pageNum === 1 ? displayHeight / 2 : 0),
+          width: displayWidth,
+          height: displayHeight,
+          layer: Date.now() + pageNum,
+          stroke: 'transparent',
+          strokeWidth: 0,
+          fill: 'transparent',
+          imageData: dataUrl,
+          pdfPage: pageNum,
+          pdfName: file.name,
+        })
+
+        yOffset += displayHeight + 20 // 20px gap between pages
+      }
+
+      setElements((prev) => {
+        const next = [...prev, ...newElements]
+        pushHistory(next)
+        return next
+      })
+      setTool('select')
+    } catch (err) {
+      console.error('Failed to load PDF:', err)
+      alert('Failed to load PDF. Make sure it\'s a valid PDF file.')
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [camera])
+
+  // ── Check if a point is over a PDF element ──
+  const isPointOverPdf = useCallback((px: number, py: number): boolean => {
+    return elements.some((el) => {
+      if (el.type !== 'pdf') return false
+      const ex = el.width < 0 ? el.x + el.width : el.x
+      const ey = el.height < 0 ? el.y + el.height : el.y
+      const ew = Math.abs(el.width || 0)
+      const eh = Math.abs(el.height || 0)
+      return px >= ex && px <= ex + ew && py >= ey && py <= ey + eh
+    })
+  }, [elements])
+
+  // Smart stroke color: returns appropriate color based on whether we're over a PDF
+  const getSmartStrokeColor = useCallback((px: number, py: number): string => {
+    if (isDark && isPointOverPdf(px, py)) {
+      // On dark canvas, drawing over white PDF → use dark ink
+      if (strokeColor === DARK_COLORS[0]) return LIGHT_COLORS[0] // white → black
+      return strokeColor // keep other colors as-is (red, green, etc. are visible on white)
+    }
+    return strokeColor
+  }, [isDark, isPointOverPdf, strokeColor])
+
+  // ── Image upload handler ──
+  const handleImageUpload = useCallback((file: File) => {
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string
+      if (!dataUrl) return
+      const img = new window.Image()
+      img.onload = () => {
+        const id = generateId()
+        const cx = -camera.x + (window.innerWidth / 2 / camera.zoom)
+        const cy = -camera.y + (window.innerHeight / 2 / camera.zoom)
+        const w = Math.min(img.naturalWidth, 600)
+        const h = (img.naturalHeight / img.naturalWidth) * w
+        setElements((prev) => {
+          const next = [
+            ...prev,
+            {
+              _id: id,
+              type: 'image',
+              x: cx - w / 2,
+              y: cy - h / 2,
+              width: w,
+              height: h,
+              layer: Date.now(),
+              stroke: 'transparent',
+              strokeWidth: 0,
+              fill: 'transparent',
+              imageData: dataUrl,
+            },
+          ]
+          pushHistory(next)
+          return next
+        })
+        setActiveId(id)
+        setTool('select')
+      }
+      img.src = dataUrl
+    }
+    reader.readAsDataURL(file)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [camera])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -303,6 +432,8 @@ export function LocalWhiteboardCanvas() {
       const id = generateId()
       // derive micro-gravitational pushback (pressure)
       const pressure = e.pressure > 0 ? e.pressure : 0.5
+      // Smart ink: auto-switch color when drawing over a PDF on dark canvas
+      const smartColor = getSmartStrokeColor(x, y)
       setElements((prev) => [
         ...prev,
         {
@@ -313,7 +444,7 @@ export function LocalWhiteboardCanvas() {
           points: [0, 0],
           pressures: [pressure],
           layer: Date.now(),
-          stroke: strokeColor,
+          stroke: smartColor,
           strokeWidth: tool === 'highlight' ? strokeWidth * 4 : strokeWidth,
           fill: 'transparent',
         },
@@ -507,6 +638,7 @@ export function LocalWhiteboardCanvas() {
     { id: 'text', icon: Type, label: 'Holo-Text', shortcut: '9' },
     { id: 'sticky', icon: StickyNote, label: 'Data-Placard', shortcut: 'S' },
     { id: 'image', icon: ImageIcon, label: 'Matter Insertion (Image)', shortcut: 'I' },
+    { id: 'pdf', icon: FileText, label: 'PDF Attachment', shortcut: 'P' },
     { id: 'eraser', icon: Eraser, label: 'Matter Annihilator', shortcut: '0' },
     { divider: true },
     { id: 'library', icon: Shapes, label: 'Construct Library' },
@@ -572,28 +704,67 @@ export function LocalWhiteboardCanvas() {
         const d = smoothPath(el.points, el.x, el.y)
         return <path key={el._id} d={d} {...commonProps} strokeOpacity={el.type === 'highlight' ? 0.3 : 1} fill="none" style={{ ...commonProps.style as any, filter: `drop-shadow(0px 0px ${sw}px ${stroke}aa)` }} />
       }
-      if (el.type === 'image' && el.imageData) {
+      if ((el.type === 'image' || el.type === 'pdf') && el.imageData) {
         const ix = (el.width || 0) < 0 ? el.x + (el.width || 0) : el.x
         const iy = (el.height || 0) < 0 ? el.y + (el.height || 0) : el.y
         const iw = Math.abs(el.width || 200)
         const ih = Math.abs(el.height || 200)
         return (
-          <image
-            key={el._id}
-            href={el.imageData}
-            x={ix}
-            y={iy}
-            width={iw}
-            height={ih}
-            preserveAspectRatio="xMidYMid meet"
-            onPointerEnter={() => handleElementHover(el._id)}
-            onPointerDown={(e: React.PointerEvent) => handleElementDown(e, el._id)}
-            cursor={commonProps.cursor}
-            style={{
-              ...commonProps.style as any,
-              outline: isSelected ? '2px solid #3b82f6' : 'none',
-            }}
-          />
+          <g key={el._id}>
+            {/* PDF white background + subtle shadow */}
+            {el.type === 'pdf' && (
+              <>
+                <rect
+                  x={ix}
+                  y={iy}
+                  width={iw}
+                  height={ih}
+                  fill="white"
+                  rx={2}
+                  filter="url(#pdf-shadow)"
+                />
+                {/* Page number badge */}
+                {el.pdfPage && (
+                  <g>
+                    <rect
+                      x={ix + iw - 36}
+                      y={iy + 4}
+                      width={32}
+                      height={18}
+                      rx={4}
+                      fill="rgba(0,0,0,0.6)"
+                    />
+                    <text
+                      x={ix + iw - 20}
+                      y={iy + 16}
+                      textAnchor="middle"
+                      fill="white"
+                      fontSize={10}
+                      fontWeight="bold"
+                      fontFamily="sans-serif"
+                    >
+                      p{el.pdfPage}
+                    </text>
+                  </g>
+                )}
+              </>
+            )}
+            <image
+              href={el.imageData}
+              x={ix}
+              y={iy}
+              width={iw}
+              height={ih}
+              preserveAspectRatio="xMidYMid meet"
+              onPointerEnter={() => handleElementHover(el._id)}
+              onPointerDown={(e: React.PointerEvent) => handleElementDown(e, el._id)}
+              cursor={commonProps.cursor}
+              style={{
+                ...commonProps.style as any,
+                outline: isSelected ? '2px solid #3b82f6' : 'none',
+              }}
+            />
+          </g>
         )
       }
       if (el.type === 'text' || el.type === 'sticky') {
@@ -734,6 +905,12 @@ export function LocalWhiteboardCanvas() {
         onPointerLeave={onPointerUp}
         onPointerCancel={onPointerUp}
       >
+        {/* SVG filter for PDF drop shadow */}
+        <defs>
+          <filter id="pdf-shadow" x="-4%" y="-4%" width="108%" height="108%">
+            <feDropShadow dx="0" dy="2" stdDeviation="6" floodOpacity="0.25" />
+          </filter>
+        </defs>
         <g transform={`scale(${camera.zoom}) translate(${camera.x}, ${camera.y})`}>
           {renderShapes()}
         </g>
@@ -753,7 +930,17 @@ export function LocalWhiteboardCanvas() {
                 <TooltipTrigger asChild>
                   <div className="relative">
                     <button
-                      onClick={() => setTool(t.id as Tool)}
+                      onClick={() => {
+                        if (t.id === 'pdf') {
+                          pdfInputRef.current?.click()
+                          return
+                        }
+                        if (t.id === 'image') {
+                          imageInputRef.current?.click()
+                          return
+                        }
+                        setTool(t.id as Tool)
+                      }}
                       className={`p-2 rounded-[8px] transition-colors flex items-center justify-center min-w-[36px] min-h-[36px] ${
                         isActive
                           ? 'bg-[#e2dffe] dark:bg-[#3d3578] text-[#34277b] dark:text-[#c9c0ff]'
@@ -924,6 +1111,32 @@ export function LocalWhiteboardCanvas() {
       <div className="absolute bottom-4 right-4 z-10 pointer-events-auto">
         <ThemeSelector />
       </div>
+
+      {/* Hidden PDF file input */}
+      <input
+        ref={pdfInputRef}
+        type="file"
+        accept=".pdf,application/pdf"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file) handlePdfUpload(file)
+          e.target.value = ''
+        }}
+      />
+
+      {/* Hidden Image file input */}
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,image/svg+xml,image/bmp,.png,.jpg,.jpeg,.gif,.webp,.svg,.bmp"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file) handleImageUpload(file)
+          e.target.value = ''
+        }}
+      />
     </div>
   )
 }
