@@ -176,7 +176,7 @@ function Auth() {
                 <Label htmlFor="name" className="text-zinc-700 font-semibold">Full Name</Label>
                 <Input
                   id="name"
-                  className="bg-zinc-50/50 border-zinc-200 focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all h-12 rounded-xl text-base px-4"
+                  className="bg-white border-zinc-200 focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all h-12 rounded-xl text-base px-4"
                   placeholder="John Doe"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -190,7 +190,7 @@ function Auth() {
               <Label htmlFor="email" className="text-zinc-700 font-semibold">Email address</Label>
               <Input
                 id="email"
-                className="bg-zinc-50/50 border-zinc-200 focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all h-12 rounded-xl text-base px-4"
+                className="bg-white border-zinc-200 focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all h-12 rounded-xl text-base px-4"
                 type="email"
                 placeholder="you@company.com"
                 value={email}
@@ -211,7 +211,7 @@ function Auth() {
               </div>
               <Input
                 id="password"
-                className="bg-zinc-50/50 border-zinc-200 focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all h-12 rounded-xl text-base px-4"
+                className="bg-white border-zinc-200 focus:bg-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all h-12 rounded-xl text-base px-4"
                 type="password"
                 placeholder="••••••••"
                 value={password}
@@ -223,7 +223,7 @@ function Auth() {
 
             {isLogin && (
               <div className="flex items-center space-x-2 mt-1">
-                <Checkbox id="remember" className="border-zinc-300 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600 rounded-sm" />
+                <Checkbox id="remember" className="bg-white border-zinc-300 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600 rounded-sm" />
                 <label
                   htmlFor="remember"
                   className="text-sm font-medium leading-none text-zinc-600 cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -255,7 +255,7 @@ function Auth() {
           <div className="mt-6 grid grid-cols-2 gap-3">
             <Button
               variant="outline"
-              className="h-11 rounded-xl border-zinc-200 hover:bg-zinc-50 hover:border-zinc-300 font-medium transition-colors"
+              className="bg-white h-11 rounded-xl border-zinc-200 hover:bg-zinc-50 hover:border-zinc-300 font-medium transition-colors"
               onClick={() => handleOAuthLogin('github')}
               disabled={isLoading}
             >
@@ -264,7 +264,7 @@ function Auth() {
             </Button>
             <Button
               variant="outline"
-              className="h-11 rounded-xl border-zinc-200 hover:bg-zinc-50 hover:border-zinc-300 font-medium transition-colors"
+              className="bg-white h-11 rounded-xl border-zinc-200 hover:bg-zinc-50 hover:border-zinc-300 font-medium transition-colors"
               onClick={() => handleOAuthLogin('google')}
               disabled={isLoading}
             >
@@ -278,7 +278,7 @@ function Auth() {
             </Button>
           </div>
 
-          <div className="mt-8 text-center text-sm text-zinc-600 bg-zinc-50 py-3 rounded-xl border border-zinc-100">
+          <div className="mt-8 text-center text-sm text-zinc-600 bg-white py-3 rounded-xl border border-zinc-100">
             {isLogin ? "Don't have an account? " : 'Already have an account? '}
             <button 
               onClick={() => {
