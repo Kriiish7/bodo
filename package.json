@@ -34,6 +34,7 @@
     "convex": "^1.32.0",
     "framer-motion": "^12.35.1",
     "lucide-react": "^0.577.0",
+    "nitro": "^3.0.1-alpha.2",
     "radix-ui": "^1.4.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
