@@ -1,4 +1,4 @@
-import { useUser, useAuth } from "@clerk/tanstack-react-start";
+import { useAuth, useUser } from "@clerk/tanstack-react-start";
 
 export interface SessionUser {
 	id: string;

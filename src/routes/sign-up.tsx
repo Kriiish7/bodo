@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2 } from "lucide-react";
 import { SignUp } from "@clerk/tanstack-react-start";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/sign-up")({
 	component: SignUpPage,
@@ -27,10 +27,13 @@ function SignUpPage() {
 				/>
 
 				<div className="relative z-20 flex flex-col h-full">
-					<div className="flex items-center gap-3 font-bold text-2xl tracking-tight mb-auto text-white">
+					<Link
+						to="/"
+						className="flex items-center gap-3 font-bold text-2xl tracking-tight mb-auto text-white hover:opacity-80 transition-opacity"
+					>
 						<img src="/logo.png" alt="Bodo" className="h-12 w-12" />
 						Bodo
-					</div>
+					</Link>
 
 					<div className="mb-20">
 						<h1 className="text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] mb-6">
@@ -80,15 +83,18 @@ function SignUpPage() {
 			</div>
 
 			<div className="flex-1 flex flex-col justify-center items-center p-6 sm:p-12 relative overflow-auto">
-				<div className="absolute top-8 left-8 lg:hidden flex items-center gap-2 font-bold text-xl tracking-tight text-foreground z-20">
+				<Link
+					to="/"
+					className="absolute top-8 left-8 lg:hidden flex items-center gap-2 font-bold text-xl tracking-tight text-foreground z-20 hover:opacity-80 transition-opacity"
+				>
 					<img src="/logo-light.png" alt="Bodo" className="h-9 w-9" />
 					Bodo
-				</div>
+				</Link>
 
 				<div className="w-full flex justify-center items-center z-10 transition-all">
 					<SignUp signInUrl="/sign-in" forceRedirectUrl="/dashboard" />
 				</div>
 			</div>
 		</div>
-	)
+	);
 }

@@ -4,9 +4,9 @@ import {
 	Diamond,
 	Eraser,
 	FileText,
+	Film,
 	Hand,
 	Highlighter,
-	Film,
 	Image as ImageIcon,
 	Lock,
 	Minus,
@@ -16,11 +16,12 @@ import {
 	Shapes,
 	Square,
 	StickyNote,
+	TableProperties,
 	Type,
 	Undo2,
-	TableProperties,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { Button } from "#/components/ui/button";
 import { ThemeSelector } from "#/components/ui/ThemeSelector";
 import {
@@ -31,7 +32,6 @@ import {
 import { useTheme } from "#/hooks/useTheme";
 import { getStrokeOutline, smoothPath } from "./strokeUtils";
 import { TableNode } from "./TableNode";
-import { renderToStaticMarkup } from "react-dom/server";
 
 type Tool =
 	| "lock"
@@ -806,7 +806,12 @@ export function LocalWhiteboardCanvas({ boardId }: { boardId?: string }) {
 			shortcut: "I",
 		},
 		{ id: "pdf", icon: FileText, label: "PDF Attachment", shortcut: "P" },
-		{ id: "table", icon: TableProperties, label: "Structured Data Node", shortcut: "T" },
+		{
+			id: "table",
+			icon: TableProperties,
+			label: "Structured Data Node",
+			shortcut: "T",
+		},
 		{ id: "eraser", icon: Eraser, label: "Matter Annihilator", shortcut: "0" },
 		{ id: "timelapse", icon: Film, label: "Export Timelapse (FFmpeg)" },
 		{ divider: true },
@@ -818,12 +823,14 @@ export function LocalWhiteboardCanvas({ boardId }: { boardId?: string }) {
 		try {
 			setIsExporting(true);
 			setTool("select");
-			const { FFmpeg } = await import('@ffmpeg/ffmpeg');
+			const { FFmpeg } = await import("@ffmpeg/ffmpeg");
 			const ffmpeg = new FFmpeg();
-			
+
 			await ffmpeg.load({
-				coreURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js",
-				wasmURL: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm"
+				coreURL:
+					"https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js",
+				wasmURL:
+					"https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm",
 			});
 
 			const canvas = document.createElement("canvas");
@@ -834,7 +841,7 @@ export function LocalWhiteboardCanvas({ boardId }: { boardId?: string }) {
 			const ctx = canvas.getContext("2d")!;
 
 			const totalFrames = historyRef.current.length;
-			
+
 			for (let i = 0; i < totalFrames; i++) {
 				const frameElements = historyRef.current[i];
 				const svgRenderer = renderShapes(frameElements);
@@ -846,15 +853,17 @@ export function LocalWhiteboardCanvas({ boardId }: { boardId?: string }) {
 						viewBox={`0 0 ${W} ${H}`}
 						style={{ backgroundColor: isDark ? "#0a0a0a" : "#fdfdfd" }}
 					>
-						<g transform={`scale(${camera.zoom}) translate(${camera.x}, ${camera.y})`}>
+						<g
+							transform={`scale(${camera.zoom}) translate(${camera.x}, ${camera.y})`}
+						>
 							{svgRenderer}
 						</g>
-					</svg>
+					</svg>,
 				);
 
 				const img = new window.Image();
 				const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
-				
+
 				await new Promise((resolve) => {
 					img.onload = () => {
 						ctx.fillStyle = isDark ? "#0a0a0a" : "#fdfdfd";
@@ -866,26 +875,35 @@ export function LocalWhiteboardCanvas({ boardId }: { boardId?: string }) {
 					img.src = svgUrl;
 				});
 
-				const blob = await new Promise<Blob>((res) => canvas.toBlob((b) => res(b!), "image/png"));
+				const blob = await new Promise<Blob>((res) =>
+					canvas.toBlob((b) => res(b!), "image/png"),
+				);
 				const data = new Uint8Array(await blob.arrayBuffer());
-				const frameName = `frame${i.toString().padStart(3, '0')}.png`;
+				const frameName = `frame${i.toString().padStart(3, "0")}.png`;
 				await ffmpeg.writeFile(frameName, data);
 			}
 
 			// Encode with ffmpeg using libx264
 			await ffmpeg.exec([
-				'-framerate', '5', 
-				'-i', 'frame%03d.png', 
-				'-c:v', 'libx264', 
-				'-preset', 'ultrafast', 
-				'-pix_fmt', 'yuv420p', 
-				'output.mp4'
+				"-framerate",
+				"5",
+				"-i",
+				"frame%03d.png",
+				"-c:v",
+				"libx264",
+				"-preset",
+				"ultrafast",
+				"-pix_fmt",
+				"yuv420p",
+				"output.mp4",
 			]);
-			
-			const ext = await ffmpeg.readFile('output.mp4');
-			const outBlob = new Blob([ext as unknown as BlobPart], { type: 'video/mp4' });
+
+			const ext = await ffmpeg.readFile("output.mp4");
+			const outBlob = new Blob([ext as unknown as BlobPart], {
+				type: "video/mp4",
+			});
 			const url = URL.createObjectURL(outBlob);
-			const a = document.createElement('a');
+			const a = document.createElement("a");
 			a.href = url;
 			a.download = `timelapse.mp4`;
 			a.click();

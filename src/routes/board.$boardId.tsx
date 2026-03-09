@@ -1,11 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { ArrowLeft, Cloud, Share2 } from "lucide-react";
+import { useState } from "react";
 import { LocalWhiteboardCanvas } from "#/components/canvas/LocalWhiteboardCanvas";
 import { MeetingToolbar } from "#/components/canvas/MeetingToolbar";
 import { Button } from "#/components/ui/button";
 import { useSession } from "#/lib/auth-client";
-import { useState } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 

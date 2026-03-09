@@ -1,34 +1,33 @@
+import { UserButton } from "@clerk/tanstack-react-start";
+import { auth } from "@clerk/tanstack-react-start/server";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { createServerFn } from "@tanstack/react-start";
+import { motion } from "framer-motion";
 import { ArrowRight, Shield, Sparkles, Zap } from "lucide-react";
-import { LocalWhiteboardCanvas } from "../components/canvas/LocalWhiteboardCanvas";
+
 import { Button } from "../components/ui/button";
 import { useSession } from "../lib/auth-client";
-import { UserButton } from "@clerk/tanstack-react-start";
-import { createServerFn } from "@tanstack/react-start";
-import { auth } from "@clerk/tanstack-react-start/server";
 
 const authStateFn = createServerFn().handler(async () => {
 	const { userId } = await auth();
 
 	if (userId) {
-		throw redirect({ to: '/dashboard'})
+		throw redirect({ to: "/dashboard" });
 	}
-	
+
 	return userId;
-})
+});
 
 export const Route = createFileRoute("/")({
 	component: LandingPage,
 	beforeLoad: async () => {
 		await authStateFn();
-	}
+	},
 });
 
 function LandingPage() {
 	const { data: session, isPending } = useSession();
-	const { scrollY } = useScroll();
-	const y = useTransform(scrollY, [0, 500], [0, 150]);
+
 
 	return (
 		<div className="min-h-screen bg-[#0a0a0a] text-slate-50 font-sans overflow-x-hidden selection:bg-red-500/30">
@@ -63,10 +62,13 @@ function LandingPage() {
 
 			{/* Navbar */}
 			<nav className="fixed top-0 inset-x-0 z-50 py-4 px-6 lg:px-12 backdrop-blur-lg bg-[#0a0a0a]/60 border-b border-white/5 flex items-center justify-between">
-				<div className="flex items-center gap-3 font-bold text-xl tracking-tight text-white">
+				<Link
+					to="/"
+					className="flex items-center gap-3 font-bold text-xl tracking-tight text-white hover:opacity-80 transition-opacity"
+				>
 					<img src="/logo.png" alt="Bodo" className="h-10 w-10" />
 					Bodo
-				</div>
+				</Link>
 
 				<div className="flex items-center gap-3">
 					{!isPending &&
@@ -154,30 +156,7 @@ function LandingPage() {
 					</div>
 				</motion.div>
 
-				{/* Demo Canvas Preview */}
-				<motion.div
-					initial={{ opacity: 0, y: 60 }}
-					animate={{ opacity: 1, y: 0 }}
-					transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-					style={{ y }}
-					className="mt-24 w-full max-w-[1200px] h-[600px] rounded-2xl overflow-hidden border border-red-900/20 shadow-[0_20px_80px_rgba(0,0,0,0.8),0_0_60px_rgba(220,38,38,0.08)] ring-1 ring-white/5 bg-[#0a0a0a] relative"
-				>
-					<div className="absolute top-0 inset-x-0 h-12 bg-zinc-900/90 backdrop-blur-md border-b border-white/5 flex items-center px-4 z-20 gap-2">
-						<div className="h-3 w-3 rounded-full bg-red-500/80" />
-						<div className="h-3 w-3 rounded-full bg-amber-500/80" />
-						<div className="h-3 w-3 rounded-full bg-green-500/80" />
-						<div className="mx-auto flex items-center justify-center -ml-8 w-full text-xs font-semibold text-zinc-500 tracking-wider uppercase">
-							Local Scratchpad
-						</div>
-					</div>
 
-					<div className="w-full h-full pt-12 overflow-hidden relative">
-						<div className="absolute inset-0 top-12">
-							<LocalWhiteboardCanvas />
-						</div>
-						<div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_120px_rgba(0,0,0,0.9)] z-10" />
-					</div>
-				</motion.div>
 
 				{/* Feature Highlights */}
 				<div className="mt-32 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-[1200px] w-full text-left">
