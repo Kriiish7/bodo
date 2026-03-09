@@ -1,5 +1,5 @@
 import { ClerkProvider, useAuth } from "@clerk/tanstack-react-start";
-import { ui } from "@clerk/ui";
+
 import type { ConvexQueryClient } from "@convex-dev/react-query";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
@@ -65,7 +65,6 @@ function RootComponent() {
 		<ClerkProvider
 			publishableKey={PUBLISHABLE_KEY || ""}
 			afterSignOutUrl="/"
-			ui={ui}
 		>
 			<ConvexProviderWithClerk client={convex} useAuth={useAuth}>
 				<TooltipProvider>

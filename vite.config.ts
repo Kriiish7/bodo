@@ -16,7 +16,10 @@ const config = defineConfig({
 		viteReact(),
 	],
 	ssr: {
-		noExternal: ["@clerk/clerk-react", "@clerk/tanstack-react-start"],
+		noExternal: [
+			"@clerk/clerk-react",
+			"@clerk/tanstack-react-start",
+		],
 	},
 });
 
