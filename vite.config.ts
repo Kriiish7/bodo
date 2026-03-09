@@ -6,14 +6,20 @@ import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
+import { cloudflare } from "@cloudflare/vite-plugin";
+
 const config = defineConfig({
 	plugins: [
 		devtools(),
 		tsconfigPaths({ projects: ["./tsconfig.json"] }),
 		tailwindcss(),
 		tanstackStart(),
-		nitro({ preset: "vercel" }),
 		viteReact(),
+		cloudflare({
+            viteEnvironment: {
+                name: "ssr"
+            }
+        }),
 	],
 	ssr: {
 		noExternal: [
