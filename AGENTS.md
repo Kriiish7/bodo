@@ -278,11 +278,11 @@ See `.cursorrules` for Convex-specific guidance and shadcn/ui installation instr
 
 ## Quick Reference
 
-| Task          | Command                                  |
-| ------------- | ---------------------------------------- |
-| Start dev     | `bun run dev`                            |
-| Build         | `bun run build`                          |
-| Test          | `bun run test`                           |
-| Lint          | `bun run lint`                           |
-| Format        | `bun run format`                         |
-| Add component | `pnpm dlx shadcn@latest add <component>` |
+| Task          | Command                              |
+| ------------- | ------------------------------------ |
+| Start dev     | `bun run dev`                        |
+| Build         | `bun run build`                      |
+| Test          | `bun run test`                       |
+| Lint          | `bun run lint`                       |
+| Format        | `bun run format`                     |
+| Add component | `bunx shadcn@latest add <component>` |

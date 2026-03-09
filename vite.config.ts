@@ -18,7 +18,7 @@ const config = defineConfig({
     viteReact(),
   ],
   ssr: {
-    noExternal: ['@convex-dev/better-auth'],
+    noExternal: ['@clerk/clerk-react', '@clerk/tanstack-react-start'],
   },
 })
 

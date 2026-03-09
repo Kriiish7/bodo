@@ -1,5 +1,4 @@
-import { useMutation, useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { useUser, useAuth } from "@clerk/tanstack-react-start";
 
 export interface SessionUser {
 	id: string;
@@ -13,32 +12,35 @@ export interface Session {
 }
 
 export function useSession() {
-	const session = useQuery(api.auth.getSession);
+	const { user, isLoaded } = useUser();
+
+	if (!isLoaded) {
+		return { data: undefined, isPending: true };
+	}
+
+	if (!user) {
+		return { data: null, isPending: false };
+	}
+
 	return {
-		data: session,
-		isPending: session === undefined,
+		data: {
+			user: {
+				id: user.id,
+				email: user.primaryEmailAddress?.emailAddress || "",
+				name: user.fullName || user.firstName || "User",
+				image: user.imageUrl,
+			},
+		},
+		isPending: false,
 	};
 }
 
-export function useSignInEmail() {
-	return useMutation(api.auth.signInWithPassword);
-}
-
-export function useSignUpEmail() {
-	return useMutation(api.auth.signUp);
-}
-
 export function useSignOut() {
-	return useMutation(api.auth.signOut);
-}
-
-export function useGetAuthUrl() {
-	return useMutation(api.auth.getAuthUrl);
+	const { signOut } = useAuth();
+	return () => signOut();
 }
 
 export const authClient = {
 	useSession,
-	useSignInEmail,
-	useSignUpEmail,
 	useSignOut,
 };

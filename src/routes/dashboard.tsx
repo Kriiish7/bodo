@@ -12,7 +12,7 @@ import {
 	LayoutTemplate,
 	FolderPlus,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import {
@@ -54,6 +54,13 @@ function Dashboard() {
 	const createSpace = useMutation(api.spaces.create);
 	const removeSpace = useMutation(api.spaces.remove);
 	const createCheckout = useAction(api.polar.createCheckoutSession);
+	const syncUser = useMutation(api.auth.syncUser);
+	
+	useEffect(() => {
+		if (session?.user) {
+			syncUser().catch(console.error);
+		}
+	}, [session?.user?.id]);
 	
 	const [newTitle, setNewTitle] = useState("");
 	const [isUpgrading, setIsUpgrading] = useState(false);
@@ -137,7 +144,7 @@ function Dashboard() {
 
 	const handleLogout = async () => {
 		await signOut();
-		navigate({ to: "/auth" });
+		navigate({ to: "/sign-in" });
 	};
 
 	if (isPending || (session && !boards)) {
@@ -154,7 +161,7 @@ function Dashboard() {
 	}
 
 	if (!session?.user) {
-		navigate({ to: "/auth" });
+		navigate({ to: "/sign-in" });
 		return null;
 	}
 
@@ -208,7 +215,18 @@ function Dashboard() {
 			{/* Main Layout containing Sidebar and Content */}
 			<div className="flex flex-1 w-full max-w-[1600px] mx-auto overflow-hidden">
 				{/* Spaces Sidebar */}
-				<aside className="w-64 border-r border-white/6 p-6 hidden md:flex flex-col gap-6 overflow-y-auto">
+				<aside className="w-64 border-r border-white/6 p-6 hidden md:flex flex-col gap-8 overflow-y-auto">
+					<div>
+						<h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3 px-2">Apps</h3>
+						<div className="flex flex-col gap-1">
+							<Link
+								to="/notes"
+								className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-zinc-400 hover:text-white hover:bg-white/5"
+							>
+								<PenLine className="w-4 h-4" /> Notes
+							</Link>
+						</div>
+					</div>
 					<div>
 						<h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3 px-2">Spaces</h3>
 						<div className="flex flex-col gap-1">

@@ -1,12 +1,28 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, Shield, Sparkles, Zap } from "lucide-react";
 import { LocalWhiteboardCanvas } from "../components/canvas/LocalWhiteboardCanvas";
 import { Button } from "../components/ui/button";
 import { useSession } from "../lib/auth-client";
+import { UserButton } from "@clerk/tanstack-react-start";
+import { createServerFn } from "@tanstack/react-start";
+import { auth } from "@clerk/tanstack-react-start/server";
+
+const authStateFn = createServerFn().handler(async () => {
+	const { userId } = await auth();
+
+	if (userId) {
+		throw redirect({ to: '/dashboard'})
+	}
+	
+	return userId;
+})
 
 export const Route = createFileRoute("/")({
 	component: LandingPage,
+	beforeLoad: async () => {
+		await authStateFn();
+	}
 });
 
 function LandingPage() {
@@ -55,14 +71,19 @@ function LandingPage() {
 				<div className="flex items-center gap-3">
 					{!isPending &&
 						(session ? (
-							<Link to="/dashboard">
-								<Button className="bg-white hover:bg-slate-200 text-black font-semibold rounded-full px-6 shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all hover:scale-105">
-									Enter Workspace
-								</Button>
-							</Link>
+							<div className="flex items-center gap-4">
+								<Link to="/dashboard">
+									<Button className="bg-white hover:bg-slate-200 text-black font-semibold rounded-full px-6 shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all hover:scale-105">
+										Enter Workspace
+									</Button>
+								</Link>
+								<div className="flex items-center justify-center h-10 w-10 bg-white/10 border border-white/10 rounded-full">
+									<UserButton />
+								</div>
+							</div>
 						) : (
 							<>
-								<Link to="/auth" search={{ tab: "login" } as any}>
+								<Link to="/sign-in">
 									<Button
 										variant="ghost"
 										className="text-slate-400 hover:text-white hover:bg-white/5 rounded-full font-medium"
@@ -70,7 +91,7 @@ function LandingPage() {
 										Sign In
 									</Button>
 								</Link>
-								<Link to="/auth">
+								<Link to="/sign-up">
 									<Button className="bg-red-600 hover:bg-red-500 text-white font-semibold rounded-full px-6 shadow-[0_0_24px_rgba(220,38,38,0.4)] transition-all hover:scale-105 border border-red-500/30">
 										Start for free
 									</Button>
@@ -115,12 +136,12 @@ function LandingPage() {
 							</Link>
 						) : (
 							<>
-								<Link to="/auth" className="w-full sm:w-auto">
+								<Link to="/sign-up" className="w-full sm:w-auto">
 									<Button className="w-full sm:w-auto h-14 bg-red-600 hover:bg-red-500 text-white font-bold rounded-full px-8 text-lg shadow-[0_0_30px_rgba(220,38,38,0.4)] transition-all hover:scale-105 active:scale-95 border border-red-500/30">
 										Try Bodo Free <ArrowRight className="ml-2 h-5 w-5" />
 									</Button>
 								</Link>
-								<Link to="/auth" className="w-full sm:w-auto">
+								<Link to="/sign-in" className="w-full sm:w-auto">
 									<Button
 										variant="outline"
 										className="w-full sm:w-auto h-14 bg-transparent border-white/15 text-white font-semibold rounded-full px-8 text-lg hover:bg-white/5 transition-all"
@@ -201,7 +222,7 @@ function LandingPage() {
 
 			{/* Footer */}
 			<footer className="relative z-10 py-12 border-t border-white/5 mt-24 text-center text-zinc-600 text-sm">
-				<p>© {new Date().getFullYear()} Bodo Inc. All rights reserved.</p>
+				<p>© {new Date().getFullYear()} Presto Inc. All rights reserved.</p>
 			</footer>
 		</div>
 	);

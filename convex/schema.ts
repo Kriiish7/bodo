@@ -49,4 +49,9 @@ export default defineSchema({
     text: v.optional(v.string()),
     layer: v.number(),
   }).index("by_board", ["boardId"]),
+  notes: defineTable({
+    title: v.string(),
+    content: v.string(),
+    updatedAt: v.number(),
+  }).index("by_updated", ["updatedAt"]),
 });

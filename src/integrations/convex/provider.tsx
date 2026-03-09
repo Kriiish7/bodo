@@ -1,20 +1,24 @@
-import { ConvexProvider } from 'convex/react'
-import { ConvexQueryClient } from '@convex-dev/react-query'
+import { ConvexReactClient } from 'convex/react'
+import { ClerkProvider, useAuth } from '@clerk/tanstack-react-start'
+import { ConvexProviderWithClerk } from 'convex/react-clerk'
 
-const CONVEX_URL = (import.meta as any).env.VITE_CONVEX_URL
-if (!CONVEX_URL) {
-  console.error('missing envar CONVEX_URL')
+const PUBLISHABLE_KEY = (import.meta as any).env.VITE_CLERK_PUBLISHABLE_KEY
+if (!PUBLISHABLE_KEY) {
+  console.error("Missing Clerk Publishable Key")
 }
-const convexQueryClient = new ConvexQueryClient(CONVEX_URL)
 
 export default function AppConvexProvider({
+  client,
   children,
 }: {
+  client: ConvexReactClient
   children: React.ReactNode
 }) {
   return (
-    <ConvexProvider client={convexQueryClient.convexClient}>
-      {children}
-    </ConvexProvider>
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY || ""} afterSignOutUrl="/">
+      <ConvexProviderWithClerk client={client} useAuth={useAuth}>
+        {children}
+      </ConvexProviderWithClerk>
+    </ClerkProvider>
   )
 }

@@ -12,6 +12,7 @@ import type * as auth from "../auth.js";
 import type * as boards from "../boards.js";
 import type * as elements from "../elements.js";
 import type * as http from "../http.js";
+import type * as notes from "../notes.js";
 import type * as polar from "../polar.js";
 import type * as spaces from "../spaces.js";
 import type * as users from "../users.js";
@@ -27,6 +28,7 @@ declare const fullApi: ApiFromModules<{
   boards: typeof boards;
   elements: typeof elements;
   http: typeof http;
+  notes: typeof notes;
   polar: typeof polar;
   spaces: typeof spaces;
   users: typeof users;

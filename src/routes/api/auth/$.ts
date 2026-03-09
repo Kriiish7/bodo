@@ -6,13 +6,13 @@ export const Route = createFileRoute("/api/auth/$")({
 			GET: async () => {
 				return new Response(null, {
 					status: 302,
-					headers: { Location: "/auth" },
+					headers: { Location: "/sign-in" },
 				});
 			},
 			POST: async () => {
 				return new Response(null, {
 					status: 302,
-					headers: { Location: "/auth" },
+					headers: { Location: "/sign-in" },
 				});
 			},
 		},

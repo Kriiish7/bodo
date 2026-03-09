@@ -12,7 +12,7 @@ export default function HeaderUser() {
 
 	if (!session?.user) {
 		return (
-			<Link to="/auth">
+			<Link to="/sign-in">
 				<Button variant="ghost" size="sm">
 					Sign In
 				</Button>
